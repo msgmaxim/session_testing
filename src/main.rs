@@ -37,7 +37,7 @@ async fn main() {
 
     let opt = Commands::from_args();
 
-    let network = loki::TESTNET;
+    let network = loki::MAINNET;
 
     match opt {
         Commands::Serve => {

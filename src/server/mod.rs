@@ -158,11 +158,14 @@ pub async fn start(net: Network) {
 }
 
 fn serve_http(ctx: Arc<RwLock<Context>>) {
-    println!("TODO: serve HTTP");
 
+    const port: u16 = 8000;
 
+    let address = format!("0.0.0.0:{}", port);
 
-    rouille::start_server("localhost:8000", move |req| {
+    println!("Serving http on: {}", port);
+
+    rouille::start_server(&address, move |req| {
 
         router!(req,
 
