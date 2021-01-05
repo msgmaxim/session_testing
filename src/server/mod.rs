@@ -186,7 +186,7 @@ fn serve_http(ctx: Arc<RwLock<Context>>) {
                 let response = rouille::match_assets(&req, "./html");
 
                 if response.is_success() {
-                    return response;
+                    return response.with_additional_header("Access-Control-Allow-Origin", "*");
                 }
         
                 return rouille::Response::text("404 error").with_status_code(404);
