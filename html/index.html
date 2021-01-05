@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<header></header>
+
+<body>
+    <h1>Service Node Testing</h1>
+    <canvas id="myChart"></canvas>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <script>(async () => {
+
+            var ctx = document.getElementById('myChart').getContext('2d');
+
+            let res = await fetch('http://localhost:8000/data');
+
+            let results = await res.json();
+
+            // Compute sliding window
+
+            const window_size = Math.min(results.length, 10);
+
+            let sliding_results = [];
+
+            for (let i = window_size - 1; i < results.length; i++) {
+
+                let total = 0;
+                let success = 0;
+
+                for (let j = 0; j < window_size; j++) {
+                    total += results[i - j].total;
+                    success += results[i - j].total_success;
+                }
+
+                sliding_results.push({
+                    total,
+                    total_success: success,
+                    time: results[i].time,
+                });
+            }
+
+            const secondsSinceEpoch = Math.round(Date.now() / 1000);
+
+            sliding_results = sliding_results.map(res => {
+
+                let time = res.time;
+
+                let rate = 100 * res.total_success / res.total;
+
+                let D
+
+                return {
+                    x: secondsSinceEpoch - time.secs_since_epoch,
+                    y: rate,
+                };
+
+            });
+
+            let latest = sliding_results[0].x;
+
+            sliding_results = sliding_results.map(res => { return { x: res.x - latest, y: res.y } });
+
+
+            Chart.defaults.global.elements.point.backgroundColor = "rgb(255, 99, 132)";
+
+            var data = {
+                datasets: [{
+                    label: "Onion Requests Success Rate",
+                    borderColor: 'rgb(255, 99, 132)',
+                    data: sliding_results,
+                }]
+            };
+
+            console.log(latest);
+            console.log(sliding_results);
+
+            let chart = new Chart(ctx, {
+                type: 'scatter',
+                data: data,
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                max: 100,
+                                min: 0,
+                            },
+                            scaleLabel: {
+                                display: true,
+                                labelString: "Success Rate, %"
+                            }
+                        }],
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: "Time, s",
+                            }
+                        }]
+                    }
+                }
+            })
+        })()
+    </script>
+</body>

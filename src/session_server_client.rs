@@ -58,7 +58,7 @@ fn get_file_payload(file: &str, token: &str) -> serde_json::Value {
 }
 
 fn get_messages_payload(token: &str) -> serde_json::Value {
-    let endpoint = "channels/1/messages?count=1000";
+    let endpoint = "channels/1/messages?count=5&since_id=6426";
 
     let auth_header = format!("Bearer {}", token);
 

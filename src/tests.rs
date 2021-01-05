@@ -112,7 +112,10 @@ async fn get_messages_task(net: &loki::Network) -> Duration {
         match server_client.get_messages().await {
             Ok(messages) => {
                 // let bin_len = base64::decode(&file).expect("not base64").len();
-                println!("Messages: {}", messages.len());
+                for m in messages {
+                    let m: serde_json::Value = serde_json::from_str(&m).unwrap();
+                    println!("{} ", m.get("id").unwrap());
+                }
             }
             Err(err) => {
                 eprintln!("Could not get file: {}", err);

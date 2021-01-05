@@ -18,8 +18,37 @@ mod session_server_client;
 
 mod http_clients;
 
+mod server;
+
+
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+enum Commands {
+    Serve,
+    Fileserver
+}
+
 #[tokio::main]
 async fn main() {
+
+
+    env_logger::init();
+
+    let opt = Commands::from_args();
+
+    let network = loki::TESTNET;
+
+    match opt {
+        Commands::Serve => {
+            println!("Starting a testing server...");
+            server::start(network).await;
+        },
+        Commands::Fileserver => {
+            println!("Running fileserver tests");
+            tests::test_fileserver_requests().await;
+        }
+    }
 
 
     // let token = fileserver_api::get_token(&fileserver_api::DEV_FILESERVER).await.expect("Failed to get token");
@@ -56,7 +85,6 @@ async fn main() {
     // test_clearnet_requests().await;
 
     // tests::test_onion_requests().await;
-    tests::test_fileserver_requests().await;
 
 }
 
@@ -79,12 +107,4 @@ async fn test_session_clients() {
     client.store_message(&pk.to_string(), &data).await;
 
 
-}
-
-async fn test_clearnet_requests() {
-    todo!();
-}
-
-async fn test_onion_requests_managed() {
-    todo!();
 }

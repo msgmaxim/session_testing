@@ -133,7 +133,7 @@ impl PubKey {
         })
     }
 
-    pub fn gen_random(rng: &mut StdRng, network: &Network) -> PubKey {
+    pub fn gen_random(rng: &mut RngCore, network: &Network) -> PubKey {
         let pk = [
             rng.next_u64(),
             rng.next_u64(),
