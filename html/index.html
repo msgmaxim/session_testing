@@ -3,7 +3,7 @@
 <header></header>
 
 <body>
-    <h1>Service Node Testing</h1>
+    <h1 style="margin: 20px">Service Node Testing</h1>
     <div style="width:75%;">
         <canvas id="myChart"></canvas>
     </div>
@@ -42,6 +42,11 @@
 
             const secondsSinceEpoch = Math.round(Date.now() / 1000);
 
+            console.log("Now (seconds from epoch): ", secondsSinceEpoch);
+
+            console.log("First point: ", sliding_results[0]);
+            console.log("Last point: ", sliding_results[sliding_results.length - 1]);
+
             sliding_results = sliding_results.map(res => {
 
                 let time = res.time;
@@ -49,21 +54,17 @@
                 let rate = 100 * res.total_success / res.total;
 
                 return {
-                    x: secondsSinceEpoch - time.secs_since_epoch,
+                    x: time.secs_since_epoch - secondsSinceEpoch,
                     y: rate,
                 };
 
             });
 
-
             const format_time = (ago) => {
                 return ago
             };
 
-
-            let latest = sliding_results[0].x;
-
-            sliding_results = sliding_results.map(res => { return { x: format_time(res.x - latest), y: res.y } });
+            sliding_results = sliding_results.map(res => { return { x: format_time(res.x), y: res.y } });
 
 
             Chart.defaults.global.elements.point.backgroundColor = "rgb(255, 99, 132)";
@@ -76,7 +77,6 @@
                 }]
             };
 
-            console.log(latest);
             console.log(sliding_results);
 
             let chart = new Chart(ctx, {
