@@ -177,7 +177,9 @@ fn serve_http(ctx: Arc<RwLock<Context>>, options: ServeOptions) {
 
                 // let res = serde_json::to_string(&old);
 
-                rouille::Response::json(&old)
+                let res = rouille::Response::json(&old);
+
+                res.with_additional_header("Access-Control-Allow-Origin", "*")
             },
             _ => {
                 let response = rouille::match_assets(&req, "./html");
