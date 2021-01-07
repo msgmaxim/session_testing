@@ -24,8 +24,14 @@ mod server;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
+pub struct ServeOptions {
+    #[structopt(short = "p", long = "port", default_value = "8000")]
+    port: u16
+}
+
+#[derive(Debug, StructOpt)]
 enum Commands {
-    Serve,
+    Serve(ServeOptions),
     Fileserver
 }
 
@@ -40,9 +46,9 @@ async fn main() {
     let network = loki::MAINNET;
 
     match opt {
-        Commands::Serve => {
+        Commands::Serve(options) => {
             println!("Starting a testing server...");
-            server::start(network).await;
+            server::start(network, options).await;
         },
         Commands::Fileserver => {
             println!("Running fileserver tests");

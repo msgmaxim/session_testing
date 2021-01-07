@@ -10,10 +10,7 @@ use rand::{
     thread_rng, RngCore,
 };
 
-use crate::{
-    loki::{self, Network, ServiceNode},
-    onions::{send_onion_req, NextHop},
-};
+use crate::{ServeOptions, loki::{self, Network, ServiceNode}, onions::{send_onion_req, NextHop}};
 
 use futures::join;
 
@@ -137,7 +134,7 @@ impl Context {
     }
 }
 
-pub async fn start(net: Network) {
+pub async fn start(net: Network, options: ServeOptions) {
     let ctx = Context::new(net);
 
     let ctx = Arc::new(RwLock::new(ctx));
@@ -147,7 +144,7 @@ pub async fn start(net: Network) {
     let ctx_clone = ctx.clone();
 
     let _task = tokio::task::spawn_blocking(move || {
-        serve_http(ctx_clone);
+        serve_http(ctx_clone, options);
     });
 
     // TODO: Initiate periodic testing of nodes
@@ -157,9 +154,9 @@ pub async fn start(net: Network) {
     join!(fut2);
 }
 
-fn serve_http(ctx: Arc<RwLock<Context>>) {
+fn serve_http(ctx: Arc<RwLock<Context>>, options: ServeOptions) {
 
-    const port: u16 = 8000;
+    let port: u16 = options.port;
 
     let address = format!("0.0.0.0:{}", port);
 
