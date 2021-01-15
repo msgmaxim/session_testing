@@ -135,6 +135,12 @@ impl Context {
 }
 
 pub async fn start(net: Network, options: ServeOptions) {
+
+    std::panic::set_hook(Box::new(|msg| {
+        error!("Panicked with: {}", msg);
+        std::process::exit(101); // Rust's panics use 101 by default
+    }));
+
     let ctx = Context::new(net);
 
     let ctx = Arc::new(RwLock::new(ctx));
