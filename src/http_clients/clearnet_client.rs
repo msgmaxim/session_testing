@@ -8,7 +8,7 @@ pub struct ClearnetClient {
 
 impl ClearnetClient {
     pub fn new() -> Self {
-        // TODO: I might want to limit this to 
+        // TODO: I might want to limit this to
         // snode requests only
         let client = reqwest::Client::builder()
             .danger_accept_invalid_certs(true)

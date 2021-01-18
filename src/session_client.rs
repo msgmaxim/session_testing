@@ -1,5 +1,8 @@
-use crate::{http_clients::OnionClient, loki::{self, Network, ServiceNode}, sn_api};
-
+use crate::{
+    http_clients::OnionClient,
+    loki::{self, Network, ServiceNode},
+    sn_api,
+};
 
 pub struct SessionClient {
     onion_client: OnionClient,
@@ -7,20 +10,20 @@ pub struct SessionClient {
 }
 
 impl SessionClient {
-
     pub async fn new(net: &Network) -> Self {
         let onion_client = OnionClient::init(net).await;
 
-        let node_pool = loki::get_n_service_nodes(0, net).await;
+        let node_pool = loki::get_n_service_nodes(0, net)
+            .await
+            .expect("Could not initialize node pool");
 
         SessionClient {
             onion_client,
-            node_pool
+            node_pool,
         }
     }
 
     pub async fn store_message(&self, pk: &str, message: &[u8]) {
-
         // 0. Get at least one node to start with;
 
         let rand_node = &self.node_pool[0];
@@ -30,6 +33,5 @@ impl SessionClient {
         let swarm = sn_api::get_swarm_for_pk(rand_node, pk).await;
 
         dbg!(swarm);
-
     }
 }

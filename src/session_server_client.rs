@@ -81,7 +81,8 @@ impl OpenGroupInterface for SessionServerClient {
 
         let res = self.onion_client.onion_to_server(server, payload).await?;
 
-        let res : serde_json::Value = serde_json::from_str(&res).map_err(|_| "Not valid json".to_owned())?;
+        let res: serde_json::Value =
+            serde_json::from_str(&res).map_err(|_| "Not valid json".to_owned())?;
 
         let data = res.get("data").ok_or("No data field".to_owned())?;
 
@@ -92,7 +93,6 @@ impl OpenGroupInterface for SessionServerClient {
 }
 
 async fn get_file_clearnet(file: &str, host: &str, token: &str) -> Result<String, String> {
-
     let client = reqwest::Client::new();
 
     let endpoint = format!("loki/v1/f/{}", file);
@@ -118,13 +118,11 @@ async fn get_file_clearnet(file: &str, host: &str, token: &str) -> Result<String
     let body = String::from_utf8(body).map_err(|_| "Not utf-8".to_owned())?;
 
     return Ok(base64::encode(&body));
-
 }
 
 #[async_trait]
 impl FileServerInterface for SessionServerClient {
     async fn get_file(&mut self, file: &str) -> Result<String, String> {
-
         // return get_file_clearnet(file, self.server.host, &self.token).await;
 
         let server = &self.server;

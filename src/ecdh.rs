@@ -1,6 +1,5 @@
-
+use crate::onions::{HasX25519, NextHop};
 use ring::{agreement, hmac, rand};
-use crate::onions::{NextHop, HasX25519};
 
 const NONCE_LENGTH: usize = 12;
 
@@ -79,8 +78,13 @@ pub fn aes_gcm_decrypt(iv_and_ciphertext: String, key: &Vec<u8>) -> Option<Strin
         tag,
     )
     .map_err(|err| {
-        eprintln!("Could not decrypt ciphertext, len: {}, error: {}", ciphertext.len(), err);
-    }).ok()?;
+        eprintln!(
+            "Could not decrypt ciphertext, len: {}, error: {}",
+            ciphertext.len(),
+            err
+        );
+    })
+    .ok()?;
 
     let plaintext = String::from_utf8_lossy(&plaintext).to_string();
 

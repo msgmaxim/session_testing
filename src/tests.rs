@@ -12,7 +12,19 @@ use serde_json::json;
 
 use parking_lot::Mutex;
 
-use crate::{fileserver_api, fileserver_api::DEV_FILESERVER, loki::{self, Network}, loki::{LokiServer, ServiceNode}, node_pool::NodePool, onions::NextHop, onions::{send_onion_req, OnionPath}, session_server_client::FileServerInterface, session_server_client::{OpenGroupInterface, SessionServerClient}, sn_api, swarm_mapping::SwarmMapping};
+use crate::{
+    fileserver_api,
+    fileserver_api::DEV_FILESERVER,
+    loki::{self, Network},
+    loki::{LokiServer, ServiceNode},
+    node_pool::NodePool,
+    onions::NextHop,
+    onions::{send_onion_req, OnionPath},
+    session_server_client::FileServerInterface,
+    session_server_client::{OpenGroupInterface, SessionServerClient},
+    sn_api,
+    swarm_mapping::SwarmMapping,
+};
 
 fn sleep_ms(millis: u64) {
     std::thread::sleep(std::time::Duration::from_millis(millis));
@@ -102,28 +114,26 @@ async fn fileserver_task(net: &loki::Network) -> Duration {
 }
 
 async fn get_messages_task(net: &loki::Network) -> Duration {
-
     let mut server_client = SessionServerClient::init(net, &fileserver_api::DEV_OPEN_GROUP_SERVER)
         .await
         .expect("Could not create Filserver client");
 
-        let tp = std::time::Instant::now();
+    let tp = std::time::Instant::now();
 
-        match server_client.get_messages().await {
-            Ok(messages) => {
-                // let bin_len = base64::decode(&file).expect("not base64").len();
-                for m in messages {
-                    let m: serde_json::Value = serde_json::from_str(&m).unwrap();
-                    println!("{} ", m.get("id").unwrap());
-                }
-            }
-            Err(err) => {
-                eprintln!("Could not get file: {}", err);
+    match server_client.get_messages().await {
+        Ok(messages) => {
+            // let bin_len = base64::decode(&file).expect("not base64").len();
+            for m in messages {
+                let m: serde_json::Value = serde_json::from_str(&m).unwrap();
+                println!("{} ", m.get("id").unwrap());
             }
         }
-    
-        tp.elapsed()
+        Err(err) => {
+            eprintln!("Could not get file: {}", err);
+        }
+    }
 
+    tp.elapsed()
 }
 
 pub async fn test_fileserver_requests() {

@@ -63,7 +63,6 @@ pub async fn send_onion_req(
     payload: &[u8],
     i: u64,
 ) -> Result<String, OnionError> {
-
     let [n1, n2, n3] = node_path;
 
     let guard_pubkey = &n1.service_node_pubkey;

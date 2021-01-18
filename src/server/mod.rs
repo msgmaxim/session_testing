@@ -10,11 +10,15 @@ use rand::{
     thread_rng, RngCore,
 };
 
-use crate::{ServeOptions, loki::{self, Network, ServiceNode}, onions::{send_onion_req, NextHop}};
+use crate::{
+    loki::{self, Network, ServiceNode},
+    onions::{send_onion_req, NextHop},
+    ServeOptions,
+};
 
 use futures::join;
 
-use log::{error, info, warn, trace};
+use log::{error, info, trace, warn};
 
 use rouille::router;
 
@@ -23,14 +27,14 @@ use serde::Serialize;
 #[derive(Debug)]
 struct OnionResult {
     time: std::time::SystemTime,
-    success: bool
+    success: bool,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 struct OnionResultAggregated {
     time: std::time::SystemTime,
     total: u32,
-    total_success: u32
+    total_success: u32,
 }
 
 // struct CircularBuffer<T> {
@@ -54,13 +58,12 @@ struct OnionResultAggregated {
 
 // }
 
-
 const BUFFER_LIMIT: usize = 720;
 
 #[derive(Debug)]
 /// Note the use of a double buffer
 struct OnionResults {
-    recent_results: Vec<OnionResult>, 
+    recent_results: Vec<OnionResult>,
     results_old: Vec<OnionResultAggregated>,
     results_new: Vec<OnionResultAggregated>,
 }
@@ -75,13 +78,10 @@ impl OnionResults {
     }
 
     pub(crate) fn push(&mut self, res: OnionResult) {
-
         self.recent_results.push(res);
-
     }
 
     pub(crate) fn aggregate(&mut self) {
-
         let results = &mut self.recent_results;
 
         if results.is_empty() {
@@ -94,7 +94,11 @@ impl OnionResults {
 
         let dur = last.duration_since(first).expect("Could not subtract time");
 
-        info!("Aggregating {} results, duration: {}", results.len(), dur.as_secs());
+        info!(
+            "Aggregating {} results, duration: {}",
+            results.len(),
+            dur.as_secs()
+        );
 
         let total_success = results.iter().filter(|x| x.success).count() as u32;
 
@@ -114,7 +118,6 @@ impl OnionResults {
         self.results_new.push(agg_res);
 
         assert!(self.results_new.len() <= BUFFER_LIMIT);
-
     }
 }
 
@@ -135,7 +138,6 @@ impl Context {
 }
 
 pub async fn start(net: Network, options: ServeOptions) {
-
     std::panic::set_hook(Box::new(|msg| {
         error!("Panicked with: {}", msg);
         std::process::exit(101); // Rust's panics use 101 by default
@@ -161,7 +163,6 @@ pub async fn start(net: Network, options: ServeOptions) {
 }
 
 fn serve_http(ctx: Arc<RwLock<Context>>, options: ServeOptions) {
-
     let port: u16 = options.port;
 
     let address = format!("0.0.0.0:{}", port);
@@ -169,7 +170,6 @@ fn serve_http(ctx: Arc<RwLock<Context>>, options: ServeOptions) {
     println!("Serving http on: {}", port);
 
     rouille::start_server(&address, move |req| {
-
         router!(req,
 
             (GET) (/data) => {
@@ -193,7 +193,7 @@ fn serve_http(ctx: Arc<RwLock<Context>>, options: ServeOptions) {
                 if response.is_success() {
                     return response.with_additional_header("Access-Control-Allow-Origin", "*");
                 }
-        
+
                 return rouille::Response::text("404 error").with_status_code(404);
             }
         )
@@ -206,11 +206,15 @@ async fn periodically_refresh_node_pool(ctx: Arc<RwLock<Context>>) {
     let net = ctx.read().net.clone();
 
     loop {
-        let node_pool = loki::get_n_service_nodes(0, &net).await;
-
-        dbg!(node_pool.len());
-
-        ctx.write().node_pool = node_pool;
+        match loki::get_n_service_nodes(0, &net).await {
+            Ok(nodes) => {
+                println!("Updated nodes, count: {}", nodes.len());
+                ctx.write().node_pool = nodes;
+            }
+            Err(err) => {
+                eprintln!("Failed to update nodes from seed: {}", err);
+            }
+        }
 
         async_std::task::sleep(PERIOD).await;
     }
@@ -246,7 +250,10 @@ async fn onion_req_task(ctx: Arc<RwLock<Context>>) -> bool {
 
     trace!(
         "Testing [{} -> {} -> {}] -> {}",
-        &path[0], &path[1], &path[2], &target
+        &path[0],
+        &path[1],
+        &path[2],
+        &target
     );
 
     let target = NextHop::Node(target);
@@ -308,15 +315,12 @@ async fn onion_request_testing(ctx: Arc<RwLock<Context>>) {
 }
 
 async fn aggregate_results(ctx: Arc<RwLock<Context>>) {
-
     loop {
-
         ctx.write().onion_results.aggregate();
 
         // Run every minute
         sleep_ms(60_000).await;
     }
-
 }
 
 async fn start_testing(ctx: Arc<RwLock<Context>>) {
