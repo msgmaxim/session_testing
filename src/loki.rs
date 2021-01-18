@@ -1,9 +1,8 @@
-
 use std::fmt::{self, Debug};
 
-use rand::{RngCore, prelude::StdRng};
+use rand::{prelude::StdRng, RngCore};
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ServiceNode {
@@ -27,16 +26,13 @@ pub struct LokiServer {
 }
 
 impl fmt::Display for ServiceNode {
-
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // port is most useful when testing locally, might change this for mainnet/testnet
         write!(f, "{}:{}", self.public_ip, self.storage_port)
     }
-
 }
 
 impl fmt::Display for LokiServer {
-
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // port is most useful when testing locally, might change this for mainnet/testnet
         write!(f, "{}{}", self.host, self.target)
@@ -51,7 +47,7 @@ pub struct Network {
 
 pub const LOCAL_NET: Network = Network {
     seed_url: "http://localhost:22129/json_rpc",
-    is_testnet: false
+    is_testnet: false,
 };
 
 pub const TESTNET: Network = Network {
@@ -64,7 +60,10 @@ pub const MAINNET: Network = Network {
     is_testnet: false,
 };
 
-pub async fn get_n_service_nodes(limit: u32, network: &Network) -> Vec<ServiceNode> {
+pub async fn get_n_service_nodes(
+    limit: u32,
+    network: &Network,
+) -> Result<Vec<ServiceNode>, &'static str> {
     let client = reqwest::Client::new();
 
     let params = json!({
@@ -92,15 +91,15 @@ pub async fn get_n_service_nodes(limit: u32, network: &Network) -> Vec<ServiceNo
         .json(&params)
         .send()
         .await
-        .expect("Failed to send get_n_service_nodes");
+        .map_err(|_| "Failed to send get_n_service_nodes")?;
 
-    let res_text = res.text().await.expect("obtaining text from response");
+    let res_text = res.text().await.map_err(|_| "No text in response")?;
 
-    let v: Value = serde_json::from_str(&res_text).expect("parsing json");
+    let v: Value = serde_json::from_str(&res_text).map_err(|_| "Invalid json")?;
 
     let array = &v["result"]["service_node_states"];
 
-    serde_json::from_value(array.clone()).expect("from json to value")
+    serde_json::from_value(array.clone()).map_err(|_| "Unexpected json structure")
 }
 
 #[derive(Clone)]
@@ -114,7 +113,6 @@ impl Debug for PubKey {
         write!(f, "PubKey: <{}>", self.to_string())
     }
 }
-
 
 impl PubKey {
     pub fn new(data: &str, is_testnet: bool) -> Option<PubKey> {
@@ -141,11 +139,13 @@ impl PubKey {
             rng.next_u64(),
         ];
 
-        PubKey { data: pk, is_testnet: network.is_testnet }
+        PubKey {
+            data: pk,
+            is_testnet: network.is_testnet,
+        }
     }
 
     pub fn to_string(&self) -> String {
-
         if self.is_testnet {
             format!(
                 "{:016x}{:016x}{:016x}{:016x}",

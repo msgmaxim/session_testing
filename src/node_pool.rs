@@ -14,7 +14,9 @@ pub struct NodePool {
 impl NodePool {
     /// Initialize from network's seed
     pub async fn init(net: &loki::Network) -> Self {
-        let node_pool = loki::get_n_service_nodes(0, net).await;
+        let node_pool = loki::get_n_service_nodes(0, net)
+            .await
+            .expect("Could not initialize node pool");
 
         let rng = StdRng::seed_from_u64(0);
 
@@ -22,7 +24,6 @@ impl NodePool {
     }
 
     pub fn remove_non_foundation(&mut self) {
-
         println!("Nodes total: {}", self.node_pool.len());
 
         self.node_pool.retain(|n| n.operator_address == "L8DGNNYyHUU1dAgUa3UZV9F1KePL6Ex9YCfBTPmhFgfrV4YKh2syu7JWvPHqY47cRFFR7XYQ23JVh9YbWR9zn6Qy7uDbg3P");

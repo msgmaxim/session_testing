@@ -1,8 +1,11 @@
+use serde_json::{json, Value};
 
-use serde_json::{Value, json};
-
-use crate::{ecdh, http_clients::{ClearnetClient, HttpClient, OnionClient, Request}, loki::{LOCAL_NET, Network, ServiceNode}, onions::{NextHop, OnionPath}};
-
+use crate::{
+    ecdh,
+    http_clients::{ClearnetClient, HttpClient, OnionClient, Request},
+    loki::{Network, ServiceNode, LOCAL_NET},
+    onions::{NextHop, OnionPath},
+};
 
 pub async fn onion_request_v2(
     client: &reqwest::Client,
@@ -98,7 +101,6 @@ impl From<ServiceNodeInner> for ServiceNode {
     }
 }
 
-
 pub async fn get_swarm_for_pk(
     sn: &ServiceNode,
     pk: &str,
@@ -117,7 +119,6 @@ pub async fn get_swarm_for_pk(
 
     let payload = params.to_string();
 
-
     let mut client = ClearnetClient::new();
 
     // let mut client = OnionClient::init(&LOCAL_NET).await;
@@ -128,16 +129,19 @@ pub async fn get_swarm_for_pk(
         body: payload,
     };
 
-    let res_text = client.send(req).await.map_err(|_| "Could not contact node")?;
+    let res_text = client
+        .send(req)
+        .await
+        .map_err(|_| "Could not contact node")?;
 
     let v: Value = serde_json::from_str(&res_text).map_err(|_| "body is not json")?;
 
     let array = v["snodes"].clone();
 
+    let nodes: Vec<ServiceNodeInner> =
+        serde_json::from_value(array).map_err(|_| "Could not parse Service Node entries")?;
 
-    let nodes: Vec<ServiceNodeInner> = serde_json::from_value(array).map_err(|_| "Could not parse Service Node entries")?;
-
-    let nodes : Vec<ServiceNode> = nodes.into_iter().map(|sn| sn.into()).collect();
+    let nodes: Vec<ServiceNode> = nodes.into_iter().map(|sn| sn.into()).collect();
 
     Ok(nodes)
 }

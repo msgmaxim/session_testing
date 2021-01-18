@@ -1,4 +1,8 @@
-use crate::{loki::{LokiServer, ServiceNode}, onions::NextHop, http_clients::OnionClient};
+use crate::{
+    http_clients::OnionClient,
+    loki::{LokiServer, ServiceNode},
+    onions::NextHop,
+};
 
 use serde::Deserialize;
 
@@ -29,7 +33,6 @@ pub const DEV_FILESERVER: FileServer = FileServer {
 };
 
 fn parse_file_response_v3(res: &serde_json::Value) -> Result<Vec<u8>, String> {
-
     let body = res.get("body").ok_or("No body in json")?;
 
     let data_base64 = body.as_str().ok_or("body is not a string")?;
@@ -56,7 +59,8 @@ pub async fn get_file_via_onion(
         "endpoint": endpoint
     });
 
-    let res = client.onion_to_server(server, payload)
+    let res = client
+        .onion_to_server(server, payload)
         .await
         .map_err(|_| "Could not send")?;
 
@@ -73,7 +77,6 @@ pub struct TokenResponse {
 }
 
 pub async fn get_token(server: &FileServer) -> Result<String, String> {
-
     let client = reqwest::Client::new();
 
     let target = "/loki/v1/get_challenge";
@@ -109,8 +112,9 @@ pub async fn get_token(server: &FileServer) -> Result<String, String> {
     // remove 05
     peer_pk.remove(0);
 
-    let res = crate::ecdh::aes_cbc_derive_and_decrypt(token_res.cipherText64.clone(), seckey, &peer_pk)
-        .expect("invalid ciphertext");
+    let res =
+        crate::ecdh::aes_cbc_derive_and_decrypt(token_res.cipherText64.clone(), seckey, &peer_pk)
+            .expect("invalid ciphertext");
 
     submit_token(&pubkey_hex, &res, server).await?;
 
@@ -127,7 +131,12 @@ async fn submit_token(pubkey: &str, token: &str, server: &FileServer) -> Result<
 
     let client = reqwest::Client::new();
 
-    let res = client.post(&url).json(&json).send().await.map_err(|_| "Could not submit token".to_owned())?;
+    let res = client
+        .post(&url)
+        .json(&json)
+        .send()
+        .await
+        .map_err(|_| "Could not submit token".to_owned())?;
 
     if res.status().is_success() {
         return Ok(());
@@ -136,11 +145,10 @@ async fn submit_token(pubkey: &str, token: &str, server: &FileServer) -> Result<
     }
 }
 
-
 pub async fn upload_file_via_onion(client: &mut OnionClient, server: &FileServer) {
-
     let file = std::fs::read_to_string("image.dat").expect("Could not open file");
-    let content_type = "multipart/form-data; boundary=--------------------------385203310880548241983752";
+    let content_type =
+        "multipart/form-data; boundary=--------------------------385203310880548241983752";
 
     let file_bin = base64::decode(&file).expect("Not valid base64");
 
@@ -154,14 +162,14 @@ pub async fn upload_file_via_onion(client: &mut OnionClient, server: &FileServer
     });
 
     if let Ok(res) = client.onion_to_server(server, payload_obj).await {
-
-        let res : serde_json::Value = serde_json::from_str(&res).expect("Invalid JSON");
+        let res: serde_json::Value = serde_json::from_str(&res).expect("Invalid JSON");
 
         let body = res.get("body").expect("no `body` field");
 
         let body_str = body.as_str().expect("`body` is not a string");
 
-        let body : serde_json::Value = serde_json::from_str(body_str).expect("`body` is not JSON string");
+        let body: serde_json::Value =
+            serde_json::from_str(body_str).expect("`body` is not JSON string");
 
         // println!("body: {}", serde_json::to_string_pretty(&body).unwrap());
 
@@ -170,7 +178,5 @@ pub async fn upload_file_via_onion(client: &mut OnionClient, server: &FileServer
         let file_token = data.get("file_token").expect("no 'file_token' field");
 
         println!("res.body.data.file_token: {}", file_token);
-
     }
-
 }

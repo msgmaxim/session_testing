@@ -1,6 +1,5 @@
-
+use crate::onions::{HasX25519, NextHop};
 use ring::{agreement, hmac, rand};
-use crate::onions::{NextHop, HasX25519};
 
 const NONCE_LENGTH: usize = 12;
 
@@ -35,8 +34,15 @@ pub fn encrypt_gcm(target: &NextHop, plaintext: &[u8]) -> (Vec<u8>, Vec<u8>, agr
             // Ok(())
             Ok(Vec::from(_key_material))
         },
-    )
-    .expect("Failed to derive shared key");
+    );
+
+    let shared_key = match shared_key {
+        Ok(key) => key,
+        Err(err) => {
+            eprintln!("Could not derive shared key: {}", err);
+            panic!("Could not derive shared key");
+        }
+    };
 
     // Derive key with HKDF
     let salt = "LOKI";
@@ -79,8 +85,13 @@ pub fn aes_gcm_decrypt(iv_and_ciphertext: String, key: &Vec<u8>) -> Option<Strin
         tag,
     )
     .map_err(|err| {
-        eprintln!("Could not decrypt ciphertext, len: {}, error: {}", ciphertext.len(), err);
-    }).ok()?;
+        eprintln!(
+            "Could not decrypt ciphertext, len: {}, error: {}",
+            ciphertext.len(),
+            err
+        );
+    })
+    .ok()?;
 
     let plaintext = String::from_utf8_lossy(&plaintext).to_string();
 
