@@ -24,6 +24,12 @@ use rouille::router;
 
 use serde::Serialize;
 
+mod database;
+
+use database as db;
+
+use self::database::ResultsDb;
+
 #[derive(Debug)]
 struct OnionResult {
     time: std::time::SystemTime,
@@ -37,27 +43,6 @@ struct OnionResultAggregated {
     total_success: u32,
 }
 
-// struct CircularBuffer<T> {
-//     buffer: Vec<T>,
-//     // At what index to insert the next element
-//     index: usize,
-// }
-
-// impl<T> CircularBuffer<T> {
-
-//     pub fn new(n: usize) -> Self {
-//         CircularBuffer {
-//             buffer: Vec::<T>::with_capacity(n),
-//             index: 0
-//         }
-//     }
-
-//     pub fn push(&mut self, x: T) {
-//         if index ==
-//     }
-
-// }
-
 const BUFFER_LIMIT: usize = 720;
 
 #[derive(Debug)]
@@ -66,6 +51,7 @@ struct OnionResults {
     recent_results: Vec<OnionResult>,
     results_old: Vec<OnionResultAggregated>,
     results_new: Vec<OnionResultAggregated>,
+    db: ResultsDb,
 }
 
 impl OnionResults {
@@ -74,10 +60,14 @@ impl OnionResults {
             recent_results: vec![],
             results_old: vec![],
             results_new: vec![],
+            db: ResultsDb::new(),
         }
     }
 
     pub(crate) fn push(&mut self, res: OnionResult) {
+
+        // save to the database
+
         self.recent_results.push(res);
     }
 
@@ -115,7 +105,9 @@ impl OnionResults {
             self.results_new.clear();
         }
 
-        self.results_new.push(agg_res);
+        self.results_new.push(agg_res.clone());
+
+        self.db.add_entry(agg_res);
 
         assert!(self.results_new.len() <= BUFFER_LIMIT);
     }
@@ -319,7 +311,7 @@ async fn aggregate_results(ctx: Arc<RwLock<Context>>) {
         ctx.write().onion_results.aggregate();
 
         // Run every minute
-        sleep_ms(60_000).await;
+        sleep_ms(10_000).await;
     }
 }
 

@@ -27,3 +27,7 @@ log = "0.4"
 env_logger = "*"
 ringbuf = "*"
 rouille = "*"
+
+[dependencies.rusqlite]
+version = "0.24"
+features = ["bundled"]

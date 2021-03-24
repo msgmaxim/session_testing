@@ -22,6 +22,11 @@ pub const DEV_OPEN_GROUP_SERVER: FileServer = FileServer {
     pubkey: "c5c256d1e1b32f8e20e05b05c47b8ea435b667fb571392db2c6c4f6b1ccf9422",
 };
 
+pub const SESSION_OPEN_GROUP_SERVER: FileServer = FileServer {
+    host: "sessionopengroup.com",
+    pubkey: "658d29b91892a2389505596b135e76a53db6e11d613a51dbd3d0816adffb231b",
+};
+
 pub const PRODUCTION_FILESERVER: FileServer = FileServer {
     host: "file.getsession.org",
     pubkey: "62509d59bdeec404dd0d489c1e15ba8f94fd3d619b01c1bf48a9922bfcb7311c",
