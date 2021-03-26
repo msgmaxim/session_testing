@@ -34,8 +34,15 @@ pub fn encrypt_gcm(target: &NextHop, plaintext: &[u8]) -> (Vec<u8>, Vec<u8>, agr
             // Ok(())
             Ok(Vec::from(_key_material))
         },
-    )
-    .expect("Failed to derive shared key");
+    );
+
+    let shared_key = match shared_key {
+        Ok(key) => key,
+        Err(err) => {
+            eprintln!("Could not derive shared key: {}", err);
+            panic!("Could not derive shared key");
+        }
+    };
 
     // Derive key with HKDF
     let salt = "LOKI";
