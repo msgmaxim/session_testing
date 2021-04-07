@@ -16,6 +16,7 @@ pub fn encrypt_gcm(target: &NextHop, plaintext: &[u8]) -> (Vec<u8>, Vec<u8>, agr
     let target_key = match target {
         NextHop::Node(n) => n.pubkey_x25519(),
         NextHop::Server(s) => s.pubkey_x25519(),
+        NextHop::ServerV2(s) => s.pubkey_x25519(),
     };
 
     let peer_pk_bytes = hex::decode(&target_key.as_bytes()).expect("Couldn't decode SN's pubkey");

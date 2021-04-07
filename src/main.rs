@@ -36,13 +36,19 @@ enum Commands {
     Basic,
 }
 
+async fn basic_test() {
+
+    todo!();
+
+}
+
 #[tokio::main]
 async fn main() {
     env_logger::init();
 
     let opt = Commands::from_args();
 
-    let network = loki::MAINNET;
+    let network = loki::LOCAL_NET;
 
     match opt {
         Commands::Serve(options) => {
@@ -51,13 +57,15 @@ async fn main() {
         }
         Commands::Fileserver => {
             println!("Running fileserver tests");
-            tests::test_fileserver_requests().await;
+            tests::test_fileserver_requests(&network).await;
         }
         Commands::Basic => {
             println!("Running basic tests");
+            basic_test().await;
         }
     }
 
+    return;
 
     let endpoint = format!("loki/v1/f/abcde");
 

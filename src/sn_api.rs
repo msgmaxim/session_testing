@@ -19,7 +19,7 @@ pub async fn onion_request_v2(
     // The first node is alays of type `Node`
     let first_node = match &path.node_1 {
         NextHop::Node(n) => n,
-        NextHop::Server(_) => panic!("First node must not be a server"),
+        _ => panic!("First node must not be a server"),
     };
 
     let target = "onion_req/v2";
