@@ -16,6 +16,7 @@ mod session_server_client;
 mod sn_api;
 mod swarm_mapping;
 mod tests;
+mod stats;
 
 mod http_clients;
 
@@ -34,6 +35,7 @@ enum Commands {
     Serve(ServeOptions),
     Fileserver,
     Basic,
+    Stats,
 }
 
 async fn basic_test() {
@@ -62,6 +64,10 @@ async fn main() {
         Commands::Basic => {
             println!("Running basic tests");
             basic_test().await;
+        }
+        Commands::Stats => {
+            println!("Obtaining stats from the foundation nodes");
+            stats::get_foundation_nodes_stats().await;
         }
     }
 
