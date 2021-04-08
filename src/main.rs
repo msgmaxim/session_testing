@@ -16,6 +16,7 @@ mod session_server_client;
 mod sn_api;
 mod swarm_mapping;
 mod tests;
+mod stats;
 
 mod http_clients;
 
@@ -34,6 +35,13 @@ enum Commands {
     Serve(ServeOptions),
     Fileserver,
     Basic,
+    Stats,
+}
+
+async fn basic_test() {
+
+    todo!();
+
 }
 
 #[tokio::main]
@@ -42,7 +50,7 @@ async fn main() {
 
     let opt = Commands::from_args();
 
-    let network = loki::MAINNET;
+    let network = loki::LOCAL_NET;
 
     match opt {
         Commands::Serve(options) => {
@@ -51,12 +59,19 @@ async fn main() {
         }
         Commands::Fileserver => {
             println!("Running fileserver tests");
-            tests::test_fileserver_requests().await;
+            tests::test_fileserver_requests(&network).await;
         }
         Commands::Basic => {
             println!("Running basic tests");
+            basic_test().await;
+        }
+        Commands::Stats => {
+            println!("Obtaining stats from the foundation nodes");
+            stats::get_foundation_nodes_stats().await;
         }
     }
+
+    return;
 
     let endpoint = format!("loki/v1/f/abcde");
 

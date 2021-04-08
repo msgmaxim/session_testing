@@ -2,10 +2,7 @@ use std::fmt;
 
 use rand::prelude::*;
 
-use crate::{
-    loki::{LokiServer, ServiceNode},
-    sn_api,
-};
+use crate::{loki::{LokiServer, LokiServerV2, ServiceNode}, sn_api};
 
 pub trait HasX25519 {
     fn pubkey_x25519(&self) -> String;
@@ -23,10 +20,18 @@ impl<'a> HasX25519 for &'a LokiServer {
     }
 }
 
+impl<'a> HasX25519 for &'a LokiServerV2 {
+    fn pubkey_x25519(&self) -> String {
+        self.pubkey_x25519.clone()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum NextHop {
     Node(ServiceNode),
     Server(LokiServer),
+    /// server entry that includes the port and the protocol to use
+    ServerV2(LokiServerV2),
 }
 
 impl fmt::Display for NextHop {
@@ -35,6 +40,7 @@ impl fmt::Display for NextHop {
         match self {
             NextHop::Node(node) => write!(f, "{}", node),
             NextHop::Server(server) => write!(f, "{}", server),
+            NextHop::ServerV2(server) => write!(f, "{}", server),
         }
     }
 }

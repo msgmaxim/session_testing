@@ -1,3 +1,5 @@
+use loki::LokiServerV2;
+
 use crate::{
     fileserver_api::FileServer,
     loki::{self, LokiServer, ServiceNode},
@@ -49,8 +51,10 @@ impl OnionClient {
         let host = server.host;
         let server_key = server.pubkey;
 
-        let target = NextHop::Server(LokiServer {
+        let target = NextHop::ServerV2(LokiServerV2 {
             host: host.to_owned(),
+            port: 80,
+            protocol: "http".to_owned(),
             target: "/loki/v3/lsrpc".to_owned(),
             pubkey_x25519: server_key.to_owned(),
         });

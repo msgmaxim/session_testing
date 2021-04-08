@@ -25,6 +25,15 @@ pub struct LokiServer {
     pub pubkey_x25519: String,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct LokiServerV2 {
+    pub host: String,
+    pub port: u16,
+    pub target: String,
+    pub protocol: String,
+    pub pubkey_x25519: String,
+}
+
 impl fmt::Display for ServiceNode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // port is most useful when testing locally, might change this for mainnet/testnet
@@ -36,6 +45,13 @@ impl fmt::Display for LokiServer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // port is most useful when testing locally, might change this for mainnet/testnet
         write!(f, "{}{}", self.host, self.target)
+    }
+}
+
+impl fmt::Display for LokiServerV2 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // port is most useful when testing locally, might change this for mainnet/testnet
+        write!(f, "{} {}:{}{}", self.protocol, self.host, self.port, self.target)
     }
 }
 

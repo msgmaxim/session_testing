@@ -1,8 +1,4 @@
-use crate::{
-    ecdh,
-    loki::{LokiServer, ServiceNode},
-    onions::{NextHop, OnionPath},
-};
+use crate::{ecdh, loki::{LokiServer, LokiServerV2, ServiceNode}, onions::{NextHop, OnionPath}};
 use byteorder::{LittleEndian, WriteBytesExt};
 use serde_json::json;
 
@@ -10,6 +6,7 @@ pub async fn onion_request(path: &OnionPath, payload: &[u8]) -> (Vec<u8>, Vec<u8
     let ctx_1 = match &path.target {
         NextHop::Node(node) => encrypt_for_target_node(&node, &payload),
         NextHop::Server(server) => encrypt_for_target_server(&server, &payload),
+        NextHop::ServerV2(server) => encrypt_for_target_server_v2(&server, &payload),
     };
     // Encrypt for node 3
     let ctx_2 = encrypt_for_relay(&path.node_3, &path.target, &ctx_1);
@@ -51,10 +48,16 @@ fn encrypt_for_relay(
             json_payload["host"] = serde_json::Value::String(server.host.clone());
             json_payload["target"] = serde_json::Value::String(server.target.clone());
         }
+        NextHop::ServerV2(server) => {
+            json_payload["host"] = serde_json::Value::String(server.host.clone());
+            json_payload["target"] = serde_json::Value::String(server.target.clone());
+            json_payload["port"] = serde_json::Value::Number(server.port.into());
+            json_payload["protocol"] = serde_json::Value::String(server.protocol.clone());
+        }
     };
 
     // println!(
-    //     "Payload: {}",
+    //     "Encrypt for relay. Payload: {}",
     //     serde_json::to_string_pretty(&json_payload).unwrap()
     // );
 
@@ -99,6 +102,19 @@ fn encrypt_for_target_server(server: &LokiServer, payload: &[u8]) -> EncryptionC
 
     let (ciphertext, secret_key, ephemeral_pubkey) =
         ecdh::encrypt_gcm(&NextHop::Server(server.clone()), plaintext.as_bytes());
+
+    EncryptionContext {
+        ciphertext,
+        secret_key,
+        ephemeral_pubkey,
+    }
+}
+
+fn encrypt_for_target_server_v2(server: &LokiServerV2, payload: &[u8]) -> EncryptionContext {
+    let plaintext = std::str::from_utf8(payload).expect("non-utf8");
+
+    let (ciphertext, secret_key, ephemeral_pubkey) =
+        ecdh::encrypt_gcm(&NextHop::ServerV2(server.clone()), plaintext.as_bytes());
 
     EncryptionContext {
         ciphertext,

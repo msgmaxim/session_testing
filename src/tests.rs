@@ -136,8 +136,7 @@ async fn get_messages_task(net: &loki::Network) -> Duration {
     tp.elapsed()
 }
 
-pub async fn test_fileserver_requests() {
-    let net = &loki::MAINNET;
+pub async fn test_fileserver_requests(net: &loki::Network) {
 
     let mut tasks = vec![];
 
