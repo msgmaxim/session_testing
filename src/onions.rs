@@ -45,6 +45,7 @@ impl fmt::Display for NextHop {
     }
 }
 
+#[derive(Debug)]
 pub struct OnionPath {
     pub node_1: NextHop,
     pub node_2: NextHop,
@@ -52,6 +53,7 @@ pub struct OnionPath {
     pub target: NextHop,
 }
 
+#[derive(Debug)]
 pub struct OnionError {
     pub message: String,
     pub path: OnionPath,

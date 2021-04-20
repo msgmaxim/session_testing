@@ -50,7 +50,7 @@ async fn main() {
 
     let opt = Commands::from_args();
 
-    let network = loki::LOCAL_NET;
+    let network = loki::MAINNET;
 
     match opt {
         Commands::Serve(options) => {
@@ -67,7 +67,7 @@ async fn main() {
         }
         Commands::Stats => {
             println!("Obtaining stats from the foundation nodes");
-            stats::get_foundation_nodes_stats().await;
+            stats::get_foundation_nodes_stats(&network).await;
         }
     }
 
@@ -80,8 +80,6 @@ async fn main() {
         "body": "",
         "endpoint": endpoint
     });
-
-    let network = loki::LOCAL_NET;
 
     let mut client = OnionClient::init(&network).await;
 

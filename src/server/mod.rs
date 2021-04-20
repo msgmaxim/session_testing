@@ -95,6 +95,8 @@ impl OnionResults {
             total_success,
         };
 
+        // println!("Total success: {}/{}", total_success, results.len());
+
         results.clear();
 
         if self.results_new.len() == BUFFER_LIMIT {
@@ -196,9 +198,27 @@ async fn periodically_refresh_node_pool(ctx: Arc<RwLock<Context>>) {
 
     loop {
         match loki::get_n_service_nodes(0, &net).await {
-            Ok(nodes) => {
+            Ok(mut nodes) => {
                 println!("Updated nodes, count: {}", nodes.len());
+
+                let prev = nodes.len();
+
+                for n in &nodes {
+                    if n.pubkey_x25519.len() != 64 {
+                        eprintln!("Invalid key for node: {}", n);
+                    }
+                }
+
+                // Known bad node on testnet
+                nodes.retain(|n| n.pubkey_ed25519 != "decaf01cea9acab5d457a7896d1104752b413f7de864322368820b36ea3abfff");
+
+                if prev-nodes.len() > 0 {
+                    println!("Removed nodes: {}", prev - nodes.len());
+                }
+
                 ctx.write().node_pool = nodes;
+
+                
             }
             Err(err) => {
                 eprintln!("Failed to update nodes from seed: {}", err);
@@ -253,9 +273,12 @@ async fn onion_req_task(ctx: Arc<RwLock<Context>>) -> bool {
         test_payload(&mut rng, &ctx.read().net)
     };
 
-    send_onion_req(path, target, payload.as_bytes(), 0)
-        .await
-        .is_ok()
+    let res = send_onion_req(path, target, payload.as_bytes(), 0).await;
+
+    if let Err(err) = &res {
+        eprintln!("Error: {}", &err.message);
+    }
+    res.is_ok()
 }
 
 async fn run_onion_req_task(ctx: Arc<RwLock<Context>>, in_flight: Arc<Mutex<u32>>) {

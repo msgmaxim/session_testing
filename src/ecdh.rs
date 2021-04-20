@@ -21,6 +21,10 @@ pub fn encrypt_gcm(target: &NextHop, plaintext: &[u8]) -> (Vec<u8>, Vec<u8>, agr
 
     let peer_pk_bytes = hex::decode(&target_key.as_bytes()).expect("Couldn't decode SN's pubkey");
 
+    if peer_pk_bytes.len() != peer_pk_bytes.len() {
+        eprintln!("invalid length for peer target key: {}", target_key.len());
+    }
+
     let peer_pk = agreement::UnparsedPublicKey::new(&agreement::X25519, peer_pk_bytes);
 
     // Note that this consumes our ephemeral key, we won't be able to reuse it.
@@ -66,9 +70,16 @@ pub fn aes_gcm_decrypt(iv_and_ciphertext: String, key: &Vec<u8>) -> Option<Strin
         }
     };
 
+    const TAG_LENGTH: usize = 16;
+
+        // iv_and_ciphertext must be at least NONCE_LENGTH + TAG_LENGTH long
+    if iv_and_ciphertext.len() < NONCE_LENGTH + TAG_LENGTH {
+        eprintln!("iv_and_ciphertext too short, len: {}", iv_and_ciphertext.len());
+        return None;
+    }
+
     let iv = &iv_and_ciphertext[0..NONCE_LENGTH];
 
-    const TAG_LENGTH: usize = 16;
     let tag_pos = iv_and_ciphertext.len() - TAG_LENGTH;
 
     let ciphertext = &iv_and_ciphertext[NONCE_LENGTH..tag_pos];
