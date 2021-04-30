@@ -27,6 +27,7 @@ log = "0.4"
 env_logger = "*"
 ringbuf = "*"
 rouille = "*"
+zmq = "*"
 
 [dependencies.rusqlite]
 version = "0.24"
