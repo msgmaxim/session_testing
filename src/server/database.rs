@@ -1,7 +1,11 @@
+use std::{
+    sync::{Arc, Mutex},
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
-use std::{sync::{Arc, Mutex}, time::UNIX_EPOCH};
+use rusqlite::{params, Connection, NO_PARAMS};
 
-use rusqlite::{Connection, NO_PARAMS, params};
+use log::error;
 
 use super::OnionResultAggregated;
 
@@ -13,16 +17,12 @@ pub struct ResultsDb {
 }
 
 impl ResultsDb {
-
     pub fn new() -> Self {
-
         let connection = create_or_open();
 
         let connection = Arc::new(Mutex::new(connection));
 
-        ResultsDb {
-            connection,
-        }
+        ResultsDb { connection }
     }
 
     pub(super) fn add_entry(&self, res: OnionResultAggregated) {
@@ -30,15 +30,18 @@ impl ResultsDb {
         add_entry(&connection, res);
     }
 
+    pub(super) fn read_results(&self) -> Vec<OnionResultAggregated> {
+        let connection = self.connection.lock().unwrap();
+        get_entries(&connection)
+    }
 }
-
 
 pub fn create_or_open() -> Connection {
     let db = Connection::open(DB_NAME).expect("Could not open the DB");
 
     db.execute(
         "CREATE TABLE IF NOT EXISTS onion_results(
-        timestamp TEXT,
+        timestamp TEXT NOT NULL PRIMARY KEY,
         total INTEGER NOT NULL,
         successful INTEGER NOT NULL
     )",
@@ -49,10 +52,9 @@ pub fn create_or_open() -> Connection {
     db
 }
 
-
 pub(super) fn add_entry(db: &Connection, res: OnionResultAggregated) {
-
-    let ms_from_epoch = res.time
+    let ms_from_epoch = res
+        .time
         .duration_since(UNIX_EPOCH)
         .expect("Could not get UNIX time")
         .as_millis();
@@ -65,4 +67,33 @@ pub(super) fn add_entry(db: &Connection, res: OnionResultAggregated) {
     ) {
         eprintln!("Could not insert: {}", error);
     }
+}
+
+fn get_entries(db: &Connection) -> Vec<OnionResultAggregated> {
+    let mut stmt = db
+        .prepare(
+            "SELECT timestamp, total, successful FROM onion_results ORDER BY timestamp LIMIT 720",
+        )
+        .expect("Failed to prepare db statement");
+
+    let results: Vec<_> = stmt
+        .query_map(params![], |row| {
+            let ms_str: String = row.get(0)?;
+            let ms = ms_str.parse::<u64>().unwrap();
+
+            let time = SystemTime::UNIX_EPOCH
+                .checked_add(Duration::from_millis(ms))
+                .unwrap();
+
+            Ok(OnionResultAggregated {
+                time,
+                total: row.get(1)?,
+                total_success: row.get(2)?,
+            })
+        })
+        .unwrap()
+        .map(|x| x.unwrap())
+        .collect();
+
+    results
 }

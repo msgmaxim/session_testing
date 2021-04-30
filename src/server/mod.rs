@@ -56,11 +56,18 @@ struct OnionResults {
 
 impl OnionResults {
     pub(crate) fn new() -> Self {
+
+        let db = ResultsDb::new();
+
+        let results = db.read_results();
+
+        info!("Retrieved {} results from DB", results.len());
+
         OnionResults {
             recent_results: vec![],
             results_old: vec![],
-            results_new: vec![],
-            db: ResultsDb::new(),
+            results_new: results,
+            db,
         }
     }
 
@@ -331,7 +338,7 @@ async fn aggregate_results(ctx: Arc<RwLock<Context>>) {
         ctx.write().onion_results.aggregate();
 
         // Run every minute
-        sleep_ms(10_000).await;
+        sleep_ms(60_000).await;
     }
 }
 
