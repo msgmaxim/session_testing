@@ -20,7 +20,7 @@ impl NodePool {
             .await
             .expect("Could not initialize node pool");
 
-        println!("Node pool: {:#?}", node_pool);
+        // println!("Node pool: {:#?}", node_pool);
 
         let rng = StdRng::seed_from_u64(0);
 

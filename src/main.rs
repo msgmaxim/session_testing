@@ -14,9 +14,9 @@ mod proof_of_work;
 mod session_client;
 mod session_server_client;
 mod sn_api;
+mod stats;
 mod swarm_mapping;
 mod tests;
-mod stats;
 
 mod http_clients;
 
@@ -39,9 +39,7 @@ enum Commands {
 }
 
 async fn basic_test() {
-
     todo!();
-
 }
 
 #[tokio::main]
@@ -63,7 +61,8 @@ async fn main() {
         }
         Commands::Basic => {
             println!("Running basic tests");
-            basic_test().await;
+            // basic_test().await;
+            tests::test_onion_requests().await;
         }
         Commands::Stats => {
             println!("Obtaining stats from the foundation nodes");
@@ -88,7 +87,7 @@ async fn main() {
     //     pubkey: "c5c256d1e1b32f8e20e05b05c47b8ea435b667fb571392db2c6c4f6b1ccf9422",
     // };
 
-    let server : FileServer = FileServer {
+    let server: FileServer = FileServer {
         host: "127.0.0.1",
         pubkey: "c5c256d1e1b32f8e20e05b05c47b8ea435b667fb571392db2c6c4f6b1ccf9422",
     };
@@ -96,11 +95,10 @@ async fn main() {
     let res = client
         .onion_to_server(&server, payload)
         .await
-        .map_err(|_| "Could not send").expect("could not send");
+        .map_err(|_| "Could not send")
+        .expect("could not send");
 
     println!("`res` size: {}", res.len());
-
-
 
     return;
 

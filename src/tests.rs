@@ -137,7 +137,6 @@ async fn get_messages_task(net: &loki::Network) -> Duration {
 }
 
 pub async fn test_fileserver_requests(net: &loki::Network) {
-
     let mut tasks = vec![];
 
     let count = 1;
@@ -157,6 +156,7 @@ pub async fn test_fileserver_requests(net: &loki::Network) {
 }
 
 async fn test_onion_path(context: Arc<Mutex<TestContext>>, idx: u64) {
+    println!("test onion path: {}", idx);
     // let mut context_lock = context.lock();
 
     let mut nodes = context.lock().node_pool.get_random_nodes(4);
@@ -175,18 +175,26 @@ async fn test_onion_path(context: Arc<Mutex<TestContext>>, idx: u64) {
 
     // let target = NextHop::Node(target);
 
-    let target = NextHop::Server(LokiServer {
-        host: DEV_FILESERVER.host.to_owned(),
-        target: "/loki/v3/lsrpc".to_owned(),
-        pubkey_x25519: DEV_FILESERVER.pubkey.to_owned(),
-    });
+    // let target = NextHop::Server(LokiServer {
+    //     host: DEV_FILESERVER.host.to_owned(),
+    //     target: "/loki/v3/lsrpc".to_owned(),
+    //     pubkey_x25519: DEV_FILESERVER.pubkey.to_owned(),
+    // });
 
-    // let payload = store_message(&pk);
+    let target = {
+        let mut rng = StdRng::seed_from_u64(idx);
 
-    // let file = "005yfe"; // smallets file (no problem)
-    // let file = "we2c37"; // smaller 86% failure rate
-    let file = "qot36t"; // ~5 mb (99% failure rate)
-    let payload = get_file(&file);
+        let target = nodes.choose(&mut rng).unwrap().to_owned();
+
+        NextHop::Node(target)
+    };
+
+    let payload = store_message(&pk);
+
+    // // let file = "005yfe"; // smallets file (no problem)
+    // // let file = "we2c37"; // smaller 86% failure rate
+    // let file = "qot36t"; // ~5 mb (99% failure rate)
+    // let payload = get_file(&file);
 
     // std::mem::drop(context_lock);
 
@@ -197,17 +205,11 @@ async fn test_onion_path(context: Arc<Mutex<TestContext>>, idx: u64) {
     let res = send_onion_req(path, target, payload, idx).await;
 
     let res = match res {
-        Ok(res) => {
-            // if res.len() != 1_318_040 {
-            println!("Success, len: {}", res.len());
-            // }
-
-            OnionTestResult {
-                success: true,
-                time: time_now.elapsed(),
-                path: None,
-            }
-        }
+        Ok(res) => OnionTestResult {
+            success: true,
+            time: time_now.elapsed(),
+            path: None,
+        },
         Err(onion_err) => {
             eprintln!("[{}] error: {}", idx, onion_err.message);
             OnionTestResult {
@@ -221,6 +223,7 @@ async fn test_onion_path(context: Arc<Mutex<TestContext>>, idx: u64) {
     context.lock().results.push(res);
 }
 
+#[derive(Debug)]
 struct OnionTestResult {
     pub success: bool,
     pub time: std::time::Duration,
@@ -374,6 +377,8 @@ fn print_stats(context: Arc<Mutex<TestContext>>) {
 
     let context = context.lock();
 
+    dbg!(&context.results);
+
     for res in &context.results {
         if !res.success {
             let path = res.path.as_ref().expect("No path on error");
@@ -403,4 +408,10 @@ fn print_stats(context: Arc<Mutex<TestContext>>) {
     for (key, failures) in failed_nodes {
         println!("{}: {}", key, failures);
     }
+
+    let total_duration: u128 = context.results.iter().map(|res| res.time.as_millis()).sum();
+
+    let average_ms = total_duration / context.results.len() as u128;
+
+    println!("Average: {} ms", average_ms);
 }

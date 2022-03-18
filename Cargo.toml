@@ -7,28 +7,28 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-std = "*"
+async-trait = "*"
 base64 = "*"
 byteorder = "*"
-hex = "*"
-openssl = "*"
-rand = "*"
-reqwest = {version = "0.10", features = ["json"]}
-ring = "*"
-serde = {version = "1.0", features = ["derive"]}
-serde_json = "*"
-tokio = {version = "0.2", features = ["time", "macros"]}
-async-trait = "*"
-parking_lot = "*"
-sha2 = "0.8.1"
-futures = "*"
-structopt = "0.3"
-async-std = "*"
-log = "0.4"
 env_logger = "*"
+futures = "*"
+hex = "*"
+log = "0.4"
+openssl = "*"
+parking_lot = "*"
+rand = "*"
+reqwest = {version = "0.11", features = ["json"]}
+ring = "*"
 ringbuf = "*"
 rouille = "*"
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "*"
+sha2 = "0.8.1"
+structopt = "0.3"
+tokio = {version = "1", features = ["time", "macros", "rt-multi-thread"]}
 zmq = "*"
 
 [dependencies.rusqlite]
-version = "0.24"
 features = ["bundled"]
+version = "0.24"

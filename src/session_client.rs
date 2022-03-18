@@ -32,6 +32,6 @@ impl SessionClient {
 
         let swarm = sn_api::get_swarm_for_pk(rand_node, pk).await;
 
-        dbg!(swarm);
+        // dbg!(swarm);
     }
 }

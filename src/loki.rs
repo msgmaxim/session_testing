@@ -51,7 +51,11 @@ impl fmt::Display for LokiServer {
 impl fmt::Display for LokiServerV2 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // port is most useful when testing locally, might change this for mainnet/testnet
-        write!(f, "{} {}:{}{}", self.protocol, self.host, self.port, self.target)
+        write!(
+            f,
+            "{} {}:{}{}",
+            self.protocol, self.host, self.port, self.target
+        )
     }
 }
 
@@ -110,6 +114,8 @@ pub async fn get_n_service_nodes(
         .map_err(|_| "Failed to send get_n_service_nodes")?;
 
     let res_text = res.text().await.map_err(|_| "No text in response")?;
+
+    // println!("SN list Response size: {}", res_text.len());
 
     let v: Value = serde_json::from_str(&res_text).map_err(|_| "Invalid json")?;
 
